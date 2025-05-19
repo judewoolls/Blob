@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Number Guess Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .player {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 10px;
+    }
+
+    #gameStatus {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: darkblue;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Number Guess Game</h1>
+  </header>
+
+  <main>
+    <form id="myForm">
+      <input type="number" id="myInput" placeholder="Enter a number..." required />
+      <button type="submit">Submit</button>
+    </form>
+
+    <div class="player">Tom</div>
+    <ul id="Tom"></ul>
+
+    <div class="player">Ollie</div>
+    <ul id="Ollie"></ul>
+
+    <div class="player">Jude</div>
+    <ul id="Jude"></ul>
+
+    <div class="player">Paul</div>
+    <ul id="Paul"></ul>
+
+    <div id="gameStatus">Round 1 — Tom's turn</div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 My Website</p>
+  </footer>
+
+  <script>
+    let players = ['Tom', 'Ollie', 'Jude', 'Paul'];
+    let playerScores = {
+      Tom: { correctGuesses: 0, totalScore: 0 },
+      Ollie: { correctGuesses: 0, totalScore: 0 },
+      Jude: { correctGuesses: 0, totalScore: 0 },
+      Paul: { correctGuesses: 0, totalScore: 0 },
+    };
+
+    let round = 1;
+    let guesses = {};
+    let currentPlayerIndex = 0;
+    let targetNumber = generateTargetNumber();
+
+    function generateTargetNumber() {
+      return Math.floor(Math.random() * 10) + 1;
+    }
+
+    function updateStatus(message) {
+      document.getElementById('gameStatus').innerText = message;
+    }
+
+    document.getElementById('myForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const input = document.getElementById('myInput');
+      const value = input.type === 'number' ? parseInt(input.value) : input.value.trim();
+      const currentPlayer = players[currentPlayerIndex];
+
+      if (input.type === 'number') {
+        if (isNaN(value)) {
+          alert('Please enter a valid number');
+          return;
+        }
+
+        guesses[currentPlayer] = value;
+
+        const li = document.createElement('li');
+        li.innerText = `Guess: ${value}`;
+        document.getElementById(currentPlayer).appendChild(li);
+
+        currentPlayerIndex++;
+
+        if (currentPlayerIndex < players.length) {
+          updateStatus(`Next: ${players[currentPlayerIndex]}'s turn`);
+        } else {
+          updateStatus(`The number was: ${targetNumber}. Who guessed correctly?`);
+          input.type = 'text';
+          input.placeholder = "Enter name of player who got it right";
+          currentPlayerIndex = 0;
+        }
+
+      } else {
+        if (!players.includes(value)) {
+          alert('Enter a valid player name who guessed correctly.');
+          return;
+        }
+
+        const correctPlayer = value;
+
+        playerScores[correctPlayer].correctGuesses++;
+        playerScores[correctPlayer].totalScore += guesses[correctPlayer];
+
+        const scoreLi = document.createElement('li');
+        scoreLi.innerText = `+${guesses[correctPlayer]} (Correct!)`;
+        scoreLi.style.color = 'green';
+        document.getElementById(correctPlayer).appendChild(scoreLi);
+
+        guesses = {};
+        round++;
+
+        if (round > 7) {
+          endGame();
+        } else {
+          targetNumber = generateTargetNumber();
+          updateStatus(`Round ${round} — ${players[0]}'s turn`);
+          input.type = 'number';
+          input.placeholder = 'Enter a number...';
+        }
+      }
+
+      input.value = '';
+    });
+
+    function endGame() {
+      updateStatus('Game Over!');
+      document.getElementById('myForm').style.display = 'none';
+
+      let maxCorrect = 0;
+      let potentialWinners = [];
+
+      for (let player of players) {
+        let stats = playerScores[player];
+        if (stats.correctGuesses > maxCorrect) {
+          maxCorrect = stats.correctGuesses;
+          potentialWinners = [player];
+        } else if (stats.correctGuesses === maxCorrect) {
+          potentialWinners.push(player);
+        }
+      }
+
+      if (potentialWinners.length > 1) {
+        let maxScore = 0;
+        let finalWinner = [];
+
+        for (let player of potentialWinners) {
+          let score = playerScores[player].totalScore;
+          if (score > maxScore) {
+            maxScore = score;
+            finalWinner = [player];
+          } else if (score === maxScore) {
+            finalWinner.push(player);
+          }
+        }
+
+        updateStatus(`Winner(s): ${finalWinner.join(', ')} (tie-break on score)`);
+      } else {
+        updateStatus(`Winner: ${potentialWinners[0]}!`);
+      }
+    }
+  </script>
+</body>
+</html>
+
